@@ -1278,6 +1278,26 @@
                     <default>False</default>
                     <control type="toggle"/>
                 </setting>
+                <setting id="youtube.pot.enabled" type="boolean" label="30825" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="youtube.pot.provider_url" type="string" label="30826" help="">
+                    <level>0</level>
+                    <default>http://192.168.11.170:4416/get_pot</default>
+                    <dependencies>
+                        <dependency type="enable">
+                            <condition setting="youtube.pot.enabled" operator="is">true</condition>
+                        </dependency>
+                    </dependencies>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control format="string" type="edit">
+                        <heading>30826</heading>
+                    </control>
+                </setting>
             </group>
             <group id="debug" label="14260">
                 <setting id="kodion.debug.log.level" type="integer" label="20191" help="36392">
