@@ -843,3 +843,13 @@ class AbstractSettings(object):
         if value is not None:
             return self.set_int(SETTINGS.EXEC_LIMIT, value)
         return self.get_int(SETTINGS.EXEC_LIMIT, 0)
+
+    def pot_enabled(self, value=None):
+        if value is not None:
+            return self.set_bool(SETTINGS.POT_ENABLED, value)
+        return self.get_bool(SETTINGS.POT_ENABLED, True)
+
+    def pot_provider_url(self, value=None):
+        if value is not None:
+            return self.set_string(SETTINGS.POT_PROVIDER_URL, value)
+        return self.get_string(SETTINGS.POT_PROVIDER_URL, 'http://192.168.11.170:4416/get_pot')
