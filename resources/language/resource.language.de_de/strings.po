@@ -2294,3 +2294,10 @@ msgstr "Nach Kanalnamen filtern, getrennt durc Komme, z. B. ‚Bester Kanal,Zwei
 #~ msgctxt "#30100"
 #~ msgid "Favorites"
 #~ msgstr "Favoriten"
+msgctxt "#30825"
+msgid "Enable PO Token Provider"
+msgstr "PO-Token-Provider aktivieren"
+
+msgctxt "#30826"
+msgid "PO Token Provider URL"
+msgstr "PO-Token-Provider-URL"
