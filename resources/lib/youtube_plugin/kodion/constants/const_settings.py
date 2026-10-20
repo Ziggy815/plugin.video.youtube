@@ -147,3 +147,5 @@ HTTPD_STREAM_REDIRECT = 'youtube.http.stream_redirect'  # (bool)
 
 LOG_LEVEL = 'kodion.debug.log.level'  # (int)
 EXEC_LIMIT = 'kodion.debug.exec.limit'  # (int)
+POT_ENABLED = 'youtube.pot.enabled'  # (bool)
+POT_PROVIDER_URL = 'youtube.pot.provider_url'  # (str)
