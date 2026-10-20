@@ -18,6 +18,7 @@ from re import compile as re_compile, sub as re_sub
 
 from .data_client import YouTubeDataClient
 from .subtitles import SUBTITLE_SELECTIONS, Subtitles
+from ..helper.po_token import get_cached_po_token
 from ..helper.ratebypass import ratebypass
 from ..helper.signature.cipher import Cipher
 from ..helper.utils import THUMB_TYPES, THUMB_URL
@@ -152,6 +153,7 @@ class YouTubePlayerClient(YouTubeDataClient):
         '102': {'container': 'webm',  # Discontinued
                 'discontinued': True,
                 '3D': True,
+                'title': '3D 720p',
                 'video': {'height': 720, 'codec': 'vp8'},
                 'audio': {'bitrate': 192, 'codec': 'vorbis'}},
         # === Live Streams ===
@@ -850,6 +852,7 @@ class YouTubePlayerClient(YouTubeDataClient):
         # self._cipher = None
         self._calculate_n = False
         self._cipher = False
+        self._po_token = None
 
         self._visitor_data = {
             'current': None,
@@ -862,11 +865,11 @@ class YouTubePlayerClient(YouTubeDataClient):
                 'tv_unplugged',
                 'tv',
             )),
-            ('auth_disabled|kids|av1|vp9|vp9.2|avc1|stereo_sound|multi_audio', (
-                'ios_testsuite_params',
-            )),
             ('auth_disabled|kids|av1|vp9.2|avc1|surround_sound|multi_audio', (
                 'android_testsuite_params',
+            )),
+            ('auth_disabled|kids|av1|vp9|vp9.2|avc1|stereo_sound|multi_audio', (
+                'ios_testsuite_params',
             )),
             ('auth_enabled|no_kids|av1|vp9.2|avc1|surround_sound', (
                 'android_vr',
@@ -1426,6 +1429,9 @@ class YouTubePlayerClient(YouTubeDataClient):
         params = parse_qs(parts.query)
         new_params = {}
 
+        if self._po_token and 'pot' not in params and '/videoplayback' in parts.path:
+            new_params['pot'] = [self._po_token]
+
         if 'n' not in params and '/n/' not in parts.path:
             pass
         elif not self._calculate_n:
@@ -1665,6 +1671,11 @@ class YouTubePlayerClient(YouTubeDataClient):
 
         auth_client = None
         visitor_data = self._visitor_data[visitor_data_key]
+        pot_enabled = settings.get_bool('youtube.pot.enabled', True)
+        pot_url = settings.get_string('youtube.pot.provider_url', '')
+        po_token = None
+        self._po_token = None
+
         video_details = {}
         microformat = {}
         responses = {}
@@ -1707,8 +1718,26 @@ class YouTubePlayerClient(YouTubeDataClient):
                     continue
                 allow_skip = False
                 client_data['_auth_requested'] = True
+                client_data['_visitor_data'] = visitor_data
+                client_data['json'].pop('serviceIntegrityDimensions', None)
             else:
                 allow_skip = True
+                if pot_enabled and not po_token:
+                    pot_visitor_data, po_token = get_cached_po_token(
+                        pot_url or None,
+                        content_binding=visitor_data or video_id,
+                    )
+                    self._po_token = po_token
+                    if pot_visitor_data:
+                        visitor_data = pot_visitor_data
+                        self._visitor_data[visitor_data_key] = pot_visitor_data
+                        client_data['_visitor_data'] = pot_visitor_data
+
+                if po_token:
+                    client_data['_auth_requested'] = False
+                    client_data['json']['serviceIntegrityDimensions'] = {
+                        'poToken': po_token,
+                    }
 
             exclude_retry = set()
             restart = None
@@ -1719,6 +1748,10 @@ class YouTubePlayerClient(YouTubeDataClient):
                     client_data['_cpn'] = self._generate_cpn()
                     _client = self.build_client(_client_name, client_data)
                     if _client:
+                        if po_token and not client_data.get('_auth_requested'):
+                            _client.setdefault('json', {})['serviceIntegrityDimensions'] = {
+                                'poToken': po_token,
+                            }
                         _has_auth = _client.get('_has_auth')
                         if _has_auth or _has_auth is False:
                             exclude_retry.add(_client_name)
