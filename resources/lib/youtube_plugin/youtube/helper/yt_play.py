@@ -51,6 +51,16 @@ from ...kodion.utils.redact import redact_params
 
 
 def _play_stream(provider, context):
+    # Stop a still running video (e.g. when starting a new one from the
+    # video list while the previous one is in fullscreen) before starting
+    # the new stream
+    try:
+        player = xbmc.Player()
+        if player.isPlaying():
+            player.stop()
+    except RuntimeError as exc:
+        logging.warning('Failed to stop current playback: %r', exc)
+
     ui = context.get_ui()
     params = context.get_params()
     video_id = params.get(VIDEO_ID)
