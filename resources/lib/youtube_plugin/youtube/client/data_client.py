@@ -2449,7 +2449,27 @@ class YouTubeDataClient(YouTubeLoginClient):
                 headers=headers,
                 stream=stream,
                 cache=cache,
+                quiet_status_codes=(404,),
             )
+            fallback = False
+            if (channel_id
+                    and feed_type not in {'shorts', 'live'}
+                    and getattr(response, 'status_code', None) == 404):
+                # Uploads playlist feed not available for this channel,
+                # fall back to the channel feed. The channel feed also
+                # contains shorts and live streams, which are removed later
+                # as they have their own sub-categories
+                fallback = True
+                response.close()
+                response = self.request(
+                    ''.join((self.BASE_URL,
+                             '/feeds/videos.xml?channel_id=',
+                             channel_id)),
+                    headers=headers,
+                    stream=stream,
+                    cache=cache,
+                    quiet_status_codes=(404,),
+                )
             if response is None:
                 return False, True
             with response:
@@ -2472,6 +2492,7 @@ class YouTubeDataClient(YouTubeLoginClient):
                 'channel_id': channel_id,
                 'content': content,
                 'refresh': content is not None,
+                'fallback': fallback and content is not None,
             }
             feeds = output['feeds']
             if item_id in feeds:
@@ -2514,6 +2535,7 @@ class YouTubeDataClient(YouTubeLoginClient):
                 cached_items = feed.get('cached_items')
                 refresh_feed = feed.get('refresh')
                 root = feed.get('content')
+                is_fallback = feed.get('fallback')
 
                 if refresh_feed and root is not None:
                     channel_name = findtext(
@@ -2565,6 +2587,7 @@ class YouTubeDataClient(YouTubeLoginClient):
                             ), 'get', dict_get)('views', 0),
                         },
                         '_partial': True,
+                        '_filter_fallback': bool(is_fallback),
                     } for item in iterfind(root, 'atom:entry', ns)]
                 else:
                     feed_items = []

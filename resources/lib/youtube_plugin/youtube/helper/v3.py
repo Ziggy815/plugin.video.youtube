@@ -61,6 +61,14 @@ from ...kodion.utils.datetime import parse_to_dt, utc_to_local
 _log = logging.getLogger(__name__)
 
 
+def _exclude_shorts_and_live(item):
+    """
+    Item callback used for items from the channel feed fallback, which unlike
+    the uploads playlist feed also contains shorts and live streams.
+    """
+    return not (getattr(item, 'short', False) or getattr(item, 'live', False))
+
+
 def _process_list_response(provider,
                            context,
                            json_data,
@@ -514,6 +522,9 @@ def _process_list_response(provider,
 
         if '_callback' in yt_item:
             item.callback = yt_item.pop('_callback')
+            do_callbacks = True
+        elif yt_item.get('_filter_fallback'):
+            item.callback = _exclude_shorts_and_live
             do_callbacks = True
 
         if not item.get_special_sort():

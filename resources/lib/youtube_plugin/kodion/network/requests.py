@@ -343,6 +343,7 @@ class BaseRequestsClass(object):
         if allow_redirects is None:
             allow_redirects = True
         stacklevel = kwargs.pop('stacklevel', 2)
+        quiet_status_codes = kwargs.pop('quiet_status_codes', None) or ()
 
         response = None
         request_id = None
@@ -496,16 +497,26 @@ class BaseRequestsClass(object):
                 else:
                     log_msg.append(error_info)
 
-            self.log.exception(log_msg,
+            if response_status in quiet_status_codes:
+                # Expected error, log a short message without the response
+                # body and traceback to avoid bloating the log file
+                self.log.debug('{title}: {method} {url!u} - {status}',
                                title=(error_title or 'Failed'),
                                method=method,
                                url=url,
-                               response_status=response_status,
-                               response_reason=response_reason,
-                               response_text=response_text,
-                               stacklevel=stacklevel,
-                               extra={'__redact_exc__': True},
-                               **kwargs)
+                               status=response_status,
+                               stacklevel=stacklevel)
+            else:
+                self.log.exception(log_msg,
+                                   title=(error_title or 'Failed'),
+                                   method=method,
+                                   url=url,
+                                   response_status=response_status,
+                                   response_reason=response_reason,
+                                   response_text=response_text,
+                                   stacklevel=stacklevel,
+                                   extra={'__redact_exc__': True},
+                                   **kwargs)
 
             if raise_exc:
                 if not isinstance(raise_exc, BaseException):
