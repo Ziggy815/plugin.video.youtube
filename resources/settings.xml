@@ -1280,12 +1280,12 @@
                 </setting>
                 <setting id="youtube.pot.enabled" type="boolean" label="30825" help="">
                     <level>0</level>
-                    <default>true</default>
+                    <default>false</default>
                     <control type="toggle"/>
                 </setting>
                 <setting id="youtube.pot.provider_url" type="string" label="30826" help="">
                     <level>0</level>
-                    <default>http://192.168.11.170:4416/get_pot</default>
+                    <default/>
                     <dependencies>
                         <dependency type="enable">
                             <condition setting="youtube.pot.enabled" operator="is">true</condition>

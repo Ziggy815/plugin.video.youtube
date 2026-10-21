@@ -865,14 +865,15 @@ class YouTubePlayerClient(YouTubeDataClient):
                 'tv_unplugged',
                 'tv',
             )),
+            ('auth_enabled|no_kids|av1|vp9|vp9.2|avc1|surround_sound', (
+                'android_testsuite_params',
+                'ios_testsuite_params',
+            )),
             ('auth_disabled|kids|av1|vp9.2|avc1|surround_sound|multi_audio', (
                 'android_testsuite_params',
             )),
             ('auth_disabled|kids|av1|vp9|vp9.2|avc1|stereo_sound|multi_audio', (
                 'ios_testsuite_params',
-            )),
-            ('auth_enabled|no_kids|av1|vp9.2|avc1|surround_sound', (
-                'android_vr',
             )),
             ('mpd', (
             )),
@@ -1671,8 +1672,8 @@ class YouTubePlayerClient(YouTubeDataClient):
 
         auth_client = None
         visitor_data = self._visitor_data[visitor_data_key]
-        pot_enabled = settings.get_bool('youtube.pot.enabled', True)
-        pot_url = settings.get_string('youtube.pot.provider_url', '')
+        pot_url = settings.pot_provider_url() if settings.pot_enabled() else ''
+        pot_enabled = bool(pot_url)
         po_token = None
         self._po_token = None
 
@@ -1721,23 +1722,21 @@ class YouTubePlayerClient(YouTubeDataClient):
                 client_data['_visitor_data'] = visitor_data
                 client_data['json'].pop('serviceIntegrityDimensions', None)
             else:
+                if responses:
+                    continue
                 allow_skip = True
                 if pot_enabled and not po_token:
                     pot_visitor_data, po_token = get_cached_po_token(
-                        pot_url or None,
+                        pot_url,
                         content_binding=visitor_data or video_id,
                     )
                     self._po_token = po_token
                     if pot_visitor_data:
                         visitor_data = pot_visitor_data
                         self._visitor_data[visitor_data_key] = pot_visitor_data
-                        client_data['_visitor_data'] = pot_visitor_data
 
-                if po_token:
-                    client_data['_auth_requested'] = False
-                    client_data['json']['serviceIntegrityDimensions'] = {
-                        'poToken': po_token,
-                    }
+                client_data['_auth_requested'] = False
+                client_data['_visitor_data'] = visitor_data
 
             exclude_retry = set()
             restart = None
@@ -1924,14 +1923,15 @@ class YouTubePlayerClient(YouTubeDataClient):
                     }
                     client_data['_auth_requested'] = False
 
-                responses[_client_name] = {
-                    'client': _client,
-                    'progressive_fmts': _streaming_data.get('formats'),
-                    'adaptive_fmts': _streaming_data.get('adaptiveFormats'),
-                    'mpd_manifest': _streaming_data.get('dashManifestUrl'),
-                    'hls_manifest': _streaming_data.get('hlsManifestUrl'),
-                    'captions': _result.get('captions'),
-                }
+                if 'no_playable_streams' not in name:
+                    responses[_client_name] = {
+                        'client': _client,
+                        'progressive_fmts': _streaming_data.get('formats'),
+                        'adaptive_fmts': _streaming_data.get('adaptiveFormats'),
+                        'mpd_manifest': _streaming_data.get('dashManifestUrl'),
+                        'hls_manifest': _streaming_data.get('hlsManifestUrl'),
+                        'captions': _result.get('captions'),
+                    }
 
                 if (not client_data.get('_auth_required')
                         and video_details.get('isPrivate')):
