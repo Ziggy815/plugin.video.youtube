@@ -552,7 +552,10 @@ class XbmcContextUI(AbstractContextUI):
         _property_id = property_id if raw else '-'.join((ADDON_ID, property_id))
         if process:
             value = process(value)
-        xbmcgui.Window(10000).setProperty(_property_id, value)
+        xbmcgui.Window(10000).setProperty(
+            _property_id,
+            '' if value is None else value,
+        )
         return value
 
     @classmethod

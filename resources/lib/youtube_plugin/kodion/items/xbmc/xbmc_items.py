@@ -532,7 +532,10 @@ def playback_item(context, media_item, show_fanart=None, **_kwargs):
             kwargs['path'] = uri
             media_item.set_uri(uri)
 
-    list_item = xbmcgui.ListItem(**kwargs)
+    list_item = xbmcgui.ListItem(**{
+        key: '' if value is None else value
+        for key, value in kwargs.items()
+    })
 
     if mime_type or is_external:
         list_item.setContentLookup(False)
@@ -622,7 +625,10 @@ def directory_listitem(context, directory_item, show_fanart=None, **_kwargs):
         if special_sort:
             props['specialSort'] = special_sort
 
-    list_item = xbmcgui.ListItem(**kwargs)
+    list_item = xbmcgui.ListItem(**{
+        key: '' if value is None else value
+        for key, value in kwargs.items()
+    })
 
     if show_fanart is None:
         show_fanart = context.get_settings().fanart_selection()
@@ -658,7 +664,10 @@ def image_listitem(context, image_item, show_fanart=None, **_kwargs):
         'ForceResolvePlugin': 'true',
     }
 
-    list_item = xbmcgui.ListItem(**kwargs)
+    list_item = xbmcgui.ListItem(**{
+        key: '' if value is None else value
+        for key, value in kwargs.items()
+    })
 
     if show_fanart is None:
         show_fanart = context.get_settings().fanart_selection()
@@ -693,7 +702,10 @@ def uri_listitem(_context, uri_item, **_kwargs):
         'ForceResolvePlugin': 'true',
     }
 
-    list_item = xbmcgui.ListItem(**kwargs)
+    list_item = xbmcgui.ListItem(**{
+        key: '' if value is None else value
+        for key, value in kwargs.items()
+    })
     list_item.setProperties(props)
     return list_item
 
@@ -770,7 +782,10 @@ def media_listitem(context,
     if prop_value:
         props[BOOKMARK_ID] = prop_value
 
-    list_item = xbmcgui.ListItem(**kwargs)
+    list_item = xbmcgui.ListItem(**{
+        key: '' if value is None else value
+        for key, value in kwargs.items()
+    })
 
     if show_fanart is None:
         show_fanart = context.get_settings().fanart_selection()
